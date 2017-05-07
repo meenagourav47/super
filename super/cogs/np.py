@@ -33,6 +33,7 @@ class np:
 
     @commands.command(no_pm=True, pass_context=True)
     async def np(self, ctx):
+        """Get now playing song from last.fm"""
         words = ctx.message.content.split(' ')
         slug = redis.get_slug(ctx, 'np')
         try:
