@@ -40,6 +40,10 @@ class np:
         except IndexError:
             username = await redis.read(slug)
 
+        if username is None:
+            await self.bot.say(f'Set an username first, e.g.: **{settings.SUPER_PREFIX}np joe**')
+            return
+
         song = await self.lastfm(username)
         await self.bot.say(f'**{username}** now playing: {song}')
 
