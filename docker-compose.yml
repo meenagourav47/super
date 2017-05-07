@@ -1,0 +1,14 @@
+version: '2'
+services:
+  app:
+    build: .
+    image: chauffer/super
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:alpine
