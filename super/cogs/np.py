@@ -48,6 +48,7 @@ class np:
     @commands.command(no_pm=True, pass_context=True)
     async def np(self, ctx):
         """Get now playing song from last.fm"""
+        await self.bot.send_typing(ctx.message.channel)
         words = ctx.message.content.split(' ')
         slug = redis.get_slug(ctx, 'np')
         try:
@@ -65,6 +66,7 @@ class np:
     @commands.command(no_pm=True, pass_context=True, name='wp')
     async def wp(self, ctx):
         """Get now playing song from last.fm, for the whole server"""
+        await self.bot.send_typing(ctx.message.channel)
         message = ['Users playing music in this server:']
         for member in ctx.message.server.members:
             id, name = member.id, member.display_name
