@@ -20,10 +20,10 @@ async def read(slug):
     return await conn.execute('get', slug, encoding='utf-8')
 
 
-def get_slug(ctx, command=None):
+def get_slug(ctx, command=None, id=None):
     slug = [
         ctx.message.author.server.id,
-        ctx.message.author.id,
+        id or ctx.message.author.id,
     ]
     if command:
         slug.append(command)
