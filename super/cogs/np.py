@@ -16,18 +16,19 @@ class np:
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 response = json.loads(await response.read())
-        song = []
+        song = {}
         try:
-            song.append(response['recenttracks']['track'][0]['artist']['#text'])
-
+            song['artist'] = response['recenttracks']['track'][0]['artist']['#text']
             album = response['recenttracks']['track'][0]['album']['#text']
-            if len(album) > 0:
-                song.append(album)
-            song.append(response['recenttracks']['track'][0]['name'])
+            song['album'] = album if len(album) > 0 else None
+            song['name'] = response['recenttracks']['track'][0]['name']
         except KeyError:
             pass
 
-        return ' - '.join(song)
+        text = f"{song['artist']} - {song['name']}"
+        if song['album']:
+            text += f" from {song['album']}"
+        return text
 
 
     @commands.command(no_pm=True, pass_context=True)
