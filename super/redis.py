@@ -15,9 +15,17 @@ async def write(slug, value):
     slug = slug_to_str(slug)
     return await conn.execute('set', slug, value)
 
+
 async def read(slug):
     slug = slug_to_str(slug)
     return await conn.execute('get', slug, encoding='utf-8')
+
+async def lock(slug, time=600):
+    slug = slug_to_str(slug)
+    locked = bool(await conn.execute('setnx', slug, 1))
+    if locked:
+        conn.execute('expire', slug, time * 1000)
+    return locked
 
 
 def get_slug(ctx, command=None, id=None):

@@ -29,6 +29,17 @@ async def on_ready():
     await redis.connect()
     print('Super ready!')
 
+@bot.event
+async def on_message(message):
+    slug = [
+        message.author.id,
+        message.id,
+    ]
+    locked = await redis.lock(slug)
+    if not locked:
+        return
+    await bot.process_commands(message)
+
 def main():
     for extension in extensions:
         try:
