@@ -2,9 +2,13 @@ from discord.ext import commands
 import discord
 import aiohttp
 import json
+import asyncio
+import uvloop
 
 from . import settings
 from . import redis
+
+asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 description = "Super is Yet Another Yet Another Discord Bot. github.com/chauffer/super"
 

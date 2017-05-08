@@ -28,4 +28,5 @@ pystemmer==1.3.0
 pytz==2017.2              # via tempora
 six==1.10.0               # via irc, jaraco.classes, jaraco.collections, jaraco.itertools, jaraco.logging, more-itertools, tempora
 tempora==1.6.1            # via jaraco.logging
+uvloop==0.8.0
 websockets==3.3           # via discord.py

@@ -4,3 +4,4 @@ discord.py
 aioredis
 -e git+git://github.com/chauffer/cobe.git#egg=cobe
 humanize
+uvloop
