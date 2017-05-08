@@ -1,3 +1,4 @@
+import asyncio
 import aiohttp
 import json
 from discord.ext import commands
@@ -83,13 +84,15 @@ class np:
         """Get now playing song from last.fm, for the whole server"""
         await self.bot.send_typing(ctx.message.channel)
         message = ['Users playing music in this server:']
+        tasks = []
         for member in ctx.message.server.members:
             id, name = member.id, member.display_name
             lfm = await redis.read(redis.get_slug(ctx, 'np', id=id))
             if not lfm:
                 continue
+            tasks.append(self.lastfm(lfm, name))
 
-            lastfm_data = await self.lastfm(lfm, name)
+        for lastfm_data in await asyncio.gather(*tasks):
             if lastfm_data['song']['playing_now']:
                 message.append(lastfm_data['formatted'])
         if len(message) == 1:
