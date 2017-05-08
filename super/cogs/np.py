@@ -10,19 +10,13 @@ import humanize
 class np:
     def __init__(self, bot):
         self.bot = bot
+    
 
-    async def lastfm(self, lfm, nick=None, timeago=False):
-        url = (
-            'https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks'
-            f'&limit=1&user={lfm}&api_key={settings.SUPER_LASTFM_API_KEY}&format=json'
-        )
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                response = json.loads(await response.read())
+    def _lastfm_track_to_song(self, track):
         song = {
             'time': 0,
+            'playing_now': False,
         }
-        track = response['recenttracks']['track'][0]
         try:
             song['artist'] = track['artist']['#text']
             album = track['album']['#text']
@@ -33,17 +27,37 @@ class np:
                 song['time'] = int(track['date']['uts'])
             elif '@attr' in track and 'nowplaying' in track['@attr']:
                 song['time'] = int(time.time())
-            song['timeago'] = humanize.naturaltime(datetime.fromtimestamp(song['time']))
+                song['playing_now'] = True
         except KeyError:
             pass
 
+        return song
+
+
+    def _lastfm_song_to_str(self, lfm, nick, song):
         return ' '.join([
             f'**{lfm}**',
             f'({nick})' if nick else '',
             f"now playing: **{song['artist']} - {song['name']}**",
             f"from **{song['album']}**" if song['album'] else '',
-            f"{song['timeago']}" if timeago else '',
         ])
+
+
+    async def lastfm(self, lfm, nick=None):
+        url = (
+            'https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks'
+            f'&limit=1&user={lfm}&api_key={settings.SUPER_LASTFM_API_KEY}&format=json'
+        )
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                response = json.loads(await response.read())
+        track = response['recenttracks']['track'][0]
+        song = self._lastfm_track_to_song(track)
+        return {
+            'song': song,
+            'formatted': self._lastfm_song_to_str(lfm, nick, song),
+        }
+
 
     @commands.command(no_pm=True, pass_context=True)
     async def np(self, ctx):
@@ -60,8 +74,9 @@ class np:
         if username is None:
             await self.bot.say(f'Set an username first, e.g.: **{settings.SUPER_PREFIX}np joe**')
             return
+        lastfm_data = await self.lastfm(username)
+        await self.bot.say(lastfm_data['formatted'])
 
-        await self.bot.say(await self.lastfm(username))
 
     @commands.command(no_pm=True, pass_context=True, name='wp')
     async def wp(self, ctx):
@@ -70,11 +85,15 @@ class np:
         message = ['Users playing music in this server:']
         for member in ctx.message.server.members:
             id, name = member.id, member.display_name
-
             lfm = await redis.read(redis.get_slug(ctx, 'np', id=id))
-            if lfm:
-                message.append(await self.lastfm(lfm, name, timeago=True))
+            if not lfm:
+                continue
 
+            lastfm_data = await self.lastfm(lfm, name)
+            if lastfm_data['song']['playing_now']:
+                message.append(lastfm_data['formatted'])
+        if len(message) == 1:
+            message.append('Nobody. :disappointed:')
         await self.bot.say('\n'.join(message))
 
 
