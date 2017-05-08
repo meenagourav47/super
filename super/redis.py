@@ -33,4 +33,4 @@ def get_slug(ctx, command=None, id=None):
 def slug_to_str(slug):
     if type(slug) == list:
         slug = ':'.join(slug)
-    return slug
+    return 'super:' + slug
