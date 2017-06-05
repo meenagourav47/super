@@ -45,6 +45,7 @@ def main():
     for extension in extensions:
         try:
             bot.load_extension(extension)
+            print(f'Loaded {extension}')
         except Exception as e:
             print('Failed to load extension {}\n{}: {}'.format(extension, type(e).__name__, e))
     
