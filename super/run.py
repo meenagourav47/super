@@ -22,6 +22,7 @@ bot = commands.Bot(
 extensions = [
     'super.cogs.np',
     'super.cogs.markov',
+    'super.cogs.translate',
 ]
 
 @bot.event
