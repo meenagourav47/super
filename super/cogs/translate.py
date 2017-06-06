@@ -1,8 +1,8 @@
 from discord.ext import commands
-from googletrans import Translator
-from googletrans.constants import LANGUAGES
+from aiogoogletrans import Translator
+from aiogoogletrans.constants import LANGUAGES
 
-import googletrans
+import aiogoogletrans
 
 
 class Translate:
@@ -33,17 +33,12 @@ class Translate:
             config[setting] = value
             del words[0:2]
 
-        out = Translator().translate(
+        out = await Translator().translate(
             text=' '.join(words),
             src=config['from'],
             dest=config['to'],
         )
-        if not self._is_language(out.src): 
-            # Sometimes Translated.src == words[0] for some reason
-            src = Translator().detect(text=' '.join(words)).lang
-        else:
-            src = out.src
-        await self.bot.say(f'**{src}**→**{out.dest}** - {out.text}')
+        await self.bot.say(f'**{out.src}**→**{out.dest}** - {out.text}')
 
 
 def setup(bot):
