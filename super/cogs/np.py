@@ -2,8 +2,7 @@ import asyncio
 import aiohttp
 import json
 from discord.ext import commands
-from super import settings
-from super import redis
+from super import settings, redis, utils
 from datetime import datetime
 import time
 import humanize
@@ -63,7 +62,7 @@ class np:
     @commands.command(no_pm=True, pass_context=True)
     async def np(self, ctx):
         """Get now playing song from last.fm"""
-        await self.bot.send_typing(ctx.message.channel)
+        utils.send_typing(self, ctx.message.channel)
         words = ctx.message.content.split(' ')
         slug = redis.get_slug(ctx, 'np')
         try:
@@ -82,7 +81,7 @@ class np:
     @commands.command(no_pm=True, pass_context=True, name='wp')
     async def wp(self, ctx):
         """Get now playing song from last.fm, for the whole server"""
-        await self.bot.send_typing(ctx.message.channel)
+        utils.send_typing(self, ctx.message.channel)
         message = ['Users playing music in this server:']
         tasks = []
         for member in ctx.message.server.members:

@@ -1,6 +1,7 @@
 from discord.ext import commands
 from aiogoogletrans import Translator
 from aiogoogletrans.constants import LANGUAGES
+from super import utils
 
 import aiogoogletrans
 
@@ -21,7 +22,6 @@ class Translate:
         if not len(words):
             return
 
-        await self.bot.send_typing(ctx.message.channel)
         config = {'from': 'auto', 'to': 'en'}
         for _ in range(2):
             if len(words) < 3:
@@ -33,6 +33,7 @@ class Translate:
             config[setting] = value
             del words[0:2]
 
+        utils.send_typing(self, ctx.message.channel)
         out = await Translator().translate(
             text=' '.join(words),
             src=config['from'],
