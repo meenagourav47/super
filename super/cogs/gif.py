@@ -2,10 +2,22 @@ import os
 from discord.ext import commands
 from super import utils
 import aiohttp
+import traceback
 
 class Gif:
     def __init__(self, bot):
         self.bot = bot
+
+
+    async def _url_valid(self, url):
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, timeout=1) as resp:
+                    if resp.status < 400:
+                        return True
+        except:
+            traceback.print_exc()
+        return False
 
     async def _get_url(self, text):
         async with aiohttp.ClientSession() as session:
@@ -15,16 +27,17 @@ class Gif:
                 timeout=5,
             ) as resp:
                 data = await resp.json()
-                if len(data['data']):
-                    return data['data'][0]['link']
+            for image in data['data']:
+                if await self._url_valid(image['link']):
+                    return image['link']
 
-            async with session.post(
-                'https://rightgif.com/search/web',
-                data={'text': text},
-                timeout=5,
-            ) as resp:
-                data = await resp.json()
-                return data['url']
+                async with session.post(
+                    'https://rightgif.com/search/web',
+                    data={'text': text},
+                    timeout=5,
+                ) as resp:
+                    data = await resp.json()
+                    return data['url']
 
     @commands.command(no_pm=True, pass_context=True)
     async def gif(self, ctx):
