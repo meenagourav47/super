@@ -23,6 +23,7 @@ extensions = [
     'super.cogs.np',
     'super.cogs.markov',
     'super.cogs.translate',
+    'super.cogs.gif',
 ]
 
 @bot.event
