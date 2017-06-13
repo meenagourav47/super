@@ -19,11 +19,11 @@ class Gif:
             traceback.print_exc()
         return False
 
-    async def _get_url(self, text):
+    async def _get_url(self, text, nsfw):
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 'https://api.gifme.io/v1/search',
-                data={'key': 'rX7kbMzkGu7WJwvG', 'query': text},
+                data=dict(key='rX7kbMzkGu7WJwvG', query=text, nsfw=nsfw),
                 timeout=5,
             ) as resp:
                 data = await resp.json()
@@ -41,8 +41,12 @@ class Gif:
 
     @commands.command(no_pm=True, pass_context=True)
     async def gif(self, ctx):
+        """.gif [nsfw] query - Gives you a random gif."""
         utils.send_typing(self, ctx.message.channel)
         text = ctx.message.content.split(' ', 1)[1]
+        nsfw = text.startswith('nsfw ')
+        if nsfw:
+            text.replace('nsfw ', '', 1)
         url = await self._get_url(text)
         await self.bot.say(f'**{text}**: {url}')
 
