@@ -10,6 +10,10 @@ import humanize
 class np:
     def __init__(self, bot):
         self.bot = bot
+        self.session = aiohttp.ClientSession()
+    
+    def __exit__(self):
+        self.session.close()
     
 
     def _lastfm_track_to_song(self, track):
@@ -48,9 +52,8 @@ class np:
             'https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks'
             f'&limit=1&user={lfm}&api_key={settings.SUPER_LASTFM_API_KEY}&format=json'
         )
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                response = json.loads(await response.read())
+        async with self.session.get(url) as response:
+            response = json.loads(await response.read())
         track = response['recenttracks']['track'][0]
         song = self._lastfm_track_to_song(track)
         return {
