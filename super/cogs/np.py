@@ -18,10 +18,7 @@ class np:
     
 
     def _lastfm_track_to_song(self, track):
-        song = {
-            'time': 0,
-            'playing_now': False,
-        }
+        song = dict(time=0, playing_now=False)
         try:
             song['artist'] = track['artist']['#text']
             album = track['album']['#text']
@@ -48,12 +45,16 @@ class np:
         ])
 
 
-    async def lastfm(self, lfm, nick=None):
-        url = (
-            'https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks'
-            f'&limit=1&user={lfm}&api_key={settings.SUPER_LASTFM_API_KEY}&format=json'
-        )
-        async with self.session.get(url) as response:
+    async def lastfm(self, lfm=None, ctx=None, member=None, nick=None):
+        if not lfm:
+            lfm, nick = await self._userid_to_lastfm(ctx, member)
+        if not lfm:
+            return
+
+        url = 'https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks'
+        params = dict(format='json', limit=1, user=lfm, api_key=settings.SUPER_LASTFM_API_KEY)
+
+        async with self.session.get(url, params=params) as response:
             response = json.loads(await response.read())
         track = response['recenttracks']['track'][0]
         song = self._lastfm_track_to_song(track)
@@ -62,6 +63,9 @@ class np:
             'formatted': self._lastfm_song_to_str(lfm, nick, song),
         }
 
+    async def _userid_to_lastfm(self, ctx, member):
+        lfm = await R.read(R.get_slug(ctx, 'np', id=member.id))
+        return [lfm, member.display_name]
 
     @commands.command(no_pm=True, pass_context=True)
     async def np(self, ctx):
@@ -70,17 +74,16 @@ class np:
         words = ctx.message.content.split(' ')
         slug = R.get_slug(ctx, 'np')
         try:
-            username = words[1]
-            await R.write(slug, username)
+            lfm = words[1]
+            await R.write(slug, lfm)
         except IndexError:
-            username = await R.read(slug)
+            lfm = await R.read(slug)
 
-        if username is None:
+        if not lfm:
             await self.bot.say(f'Set an username first, e.g.: **{settings.SUPER_PREFIX}np joe**')
             return
-        lastfm_data = await self.lastfm(username)
+        lastfm_data = await self.lastfm(lfm=lfm)
         await self.bot.say(lastfm_data['formatted'])
-
 
     @commands.command(no_pm=True, pass_context=True, name='wp')
     async def wp(self, ctx):
@@ -89,15 +92,11 @@ class np:
         message = ['Users playing music in this server:']
         tasks = []
         for member in ctx.message.server.members:
-            id, name = member.id, member.display_name
-            lfm = await R.read(R.get_slug(ctx, 'np', id=id))
-            if not lfm:
-                continue
-            tasks.append(self.lastfm(lfm, name))
+            tasks.append(self.lastfm(ctx=ctx, member=member))
 
-        for lastfm_data in await asyncio.gather(*tasks):
-            if lastfm_data['song']['playing_now']:
-                message.append(lastfm_data['formatted'])
+        for data in await asyncio.gather(*tasks):
+            if data and data['song']['playing_now']:
+                message.append(data['formatted'])
         if len(message) == 1:
             message.append('Nobody. :disappointed:')
         await self.bot.say('\n'.join(message))
