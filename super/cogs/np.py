@@ -2,10 +2,11 @@ import asyncio
 import aiohttp
 import json
 from discord.ext import commands
-from super import settings, redis, utils
 from datetime import datetime
 import time
-import humanize
+
+from super import settings, utils
+from super.utils import R
 
 class np:
     def __init__(self, bot):
@@ -67,12 +68,12 @@ class np:
         """Get now playing song from last.fm"""
         utils.send_typing(self, ctx.message.channel)
         words = ctx.message.content.split(' ')
-        slug = redis.get_slug(ctx, 'np')
+        slug = R.get_slug(ctx, 'np')
         try:
             username = words[1]
-            await redis.write(slug, username)
+            await R.write(slug, username)
         except IndexError:
-            username = await redis.read(slug)
+            username = await R.read(slug)
 
         if username is None:
             await self.bot.say(f'Set an username first, e.g.: **{settings.SUPER_PREFIX}np joe**')
@@ -89,7 +90,7 @@ class np:
         tasks = []
         for member in ctx.message.server.members:
             id, name = member.id, member.display_name
-            lfm = await redis.read(redis.get_slug(ctx, 'np', id=id))
+            lfm = await R.read(R.get_slug(ctx, 'np', id=id))
             if not lfm:
                 continue
             tasks.append(self.lastfm(lfm, name))

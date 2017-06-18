@@ -4,11 +4,11 @@ import aiohttp
 import json
 import asyncio
 import uvloop
+asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 from . import settings
-from . import redis
+from .utils import R
 
-asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 description = "Super is Yet Another Yet Another Discord Bot. github.com/chauffer/super"
 
@@ -28,7 +28,6 @@ extensions = [
 
 @bot.event
 async def on_ready():
-    await redis.connect()
     print('Super ready!')
 
 @bot.event
@@ -37,7 +36,7 @@ async def on_message(message):
         message.author.id,
         message.id,
     ]
-    locked = await redis.lock(slug)
+    locked = await R.lock(slug)
     if not locked:
         return
     await bot.process_commands(message)
