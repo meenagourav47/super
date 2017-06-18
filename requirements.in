@@ -6,3 +6,4 @@ aioredis
 humanize
 uvloop
 aiogoogletrans
+ujson

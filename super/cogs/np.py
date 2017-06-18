@@ -1,6 +1,6 @@
 import asyncio
 import aiohttp
-import json
+import ujson
 from discord.ext import commands
 from datetime import datetime
 import time
@@ -55,7 +55,7 @@ class np:
         params = dict(format='json', limit=1, user=lfm, api_key=settings.SUPER_LASTFM_API_KEY)
 
         async with self.session.get(url, params=params) as response:
-            response = json.loads(await response.read())
+            response = ujson.loads(await response.read())
         track = response['recenttracks']['track'][0]
         song = self._lastfm_track_to_song(track)
         return {
