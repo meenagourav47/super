@@ -94,6 +94,8 @@ class np:
         for member in ctx.message.server.members:
             tasks.append(self.lastfm(ctx=ctx, member=member))
 
+        tasks = tasks[::-1]  ## Theory: this will make it ordered by join date
+
         for data in await asyncio.gather(*tasks):
             if data and data['song']['playing_now']:
                 message.append(data['formatted'])
