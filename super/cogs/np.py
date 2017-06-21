@@ -15,35 +15,29 @@ class np:
     
     def __exit__(self):
         self.session.close()
-    
 
-    def _lastfm_track_to_song(self, track):
-        song = dict(time=0, playing_now=False)
+    def _lastfm_response_to_song(self, response):
+        song = dict(is_playing=False)
         try:
+            track = response['recenttracks']['track'][0]
             song['artist'] = track['artist']['#text']
-            album = track['album']['#text']
-            song['album'] = album if len(album) > 0 else None
+            song['album'] = track['album']['#text'] or None
             song['name'] = track['name']
 
-            if 'date' in track:
-                song['time'] = int(track['date']['uts'])
-            elif '@attr' in track and 'nowplaying' in track['@attr']:
-                song['time'] = int(time.time())
-                song['playing_now'] = True
-        except KeyError:
-            pass
+            if '@attr' in track and 'nowplaying' in track['@attr']:
+                song['is_playing'] = True
+        except (KeyError, IndexError):
+            song = dict(is_playing=True, artist=None, album=None, name=None)
 
         return song
 
-
     def _lastfm_song_to_str(self, lfm, nick, song):
+        nick = f'({nick})' if nick else ''
         return ' '.join([
-            f'**{lfm}**',
-            f'({nick})' if nick else '',
+            f'**{lfm}**{nick}',
             f"now playing: **{song['artist']} - {song['name']}**",
             f"from **{song['album']}**" if song['album'] else '',
         ])
-
 
     async def lastfm(self, lfm=None, ctx=None, member=None, nick=None):
         if not lfm:
@@ -56,8 +50,7 @@ class np:
 
         async with self.session.get(url, params=params) as response:
             response = ujson.loads(await response.read())
-        track = response['recenttracks']['track'][0]
-        song = self._lastfm_track_to_song(track)
+        song = self._lastfm_response_to_song(response)
         return {
             'song': song,
             'formatted': self._lastfm_song_to_str(lfm, nick, song),
@@ -97,7 +90,7 @@ class np:
         tasks = tasks[::-1]  ## Theory: this will make it ordered by join date
 
         for data in await asyncio.gather(*tasks):
-            if data and data['song']['playing_now']:
+            if data and data['song']['is_playing']:
                 message.append(data['formatted'])
         if len(message) == 1:
             message.append('Nobody. :disappointed:')
